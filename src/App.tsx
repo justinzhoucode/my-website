@@ -89,7 +89,7 @@ export default function App() {
                   <div className="mt-1 flex items-baseline justify-between gap-4 pl-4">
                     <p className="text-fg">
                       <span className="mr-1 text-muted">↳</span>
-                      software engineer at{' '}
+                      software engineer intern at{' '}
                       <a
                         href="https://axl.vc/"
                         target="_blank"
@@ -106,6 +106,58 @@ export default function App() {
                     </p>
                     <span className="shrink-0 font-mono text-sm text-muted">
                       jan 2026 - aug 2026
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-fg">was a:</p>
+                  <div className="mt-1 flex items-baseline justify-between gap-4 pl-4">
+                    <p className="text-fg">
+                      <span className="mr-1 text-muted">↳</span>
+                      software engineer intern at{' '}
+                      <a
+                        href="https://adsuiteai.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium whitespace-nowrap underline-offset-2 hover:underline"
+                      >
+                        <img
+                          src="/adsuiteai.png"
+                          alt="Ad Suite AI logo"
+                          className="mr-1.5 inline-block h-5 w-5 rounded object-cover align-middle"
+                        />
+                        Ad Suite AI
+                      </a>
+                    </p>
+                    <span className="shrink-0 font-mono text-sm text-muted">
+                      may 2025 - aug 2025
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-fg">was a:</p>
+                  <div className="mt-1 flex items-baseline justify-between gap-4 pl-4">
+                    <p className="text-fg">
+                      <span className="mr-1 text-muted">↳</span>
+                      cyber and information security intern at{' '}
+                      <a
+                        href="https://www.olg.ca/en/home.html"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-medium whitespace-nowrap underline-offset-2 hover:underline"
+                      >
+                        <img
+                          src="/olg.png"
+                          alt="Ontario Lottery and Gaming logo"
+                          className="mr-1.5 inline-block h-5 w-5 rounded object-cover align-middle"
+                        />
+                        OLG
+                      </a>
+                    </p>
+                    <span className="shrink-0 font-mono text-sm text-muted">
+                      may 2024 - aug 2024
                     </span>
                   </div>
                 </div>
