@@ -165,7 +165,44 @@ export default function App() {
             )}
 
             {active === 'projects' && (
-              <p className="text-subtle">{/* projects content here */}</p>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-fg">clui:</p>
+                  <p className="mt-1 pl-4 text-subtle">
+                    <span className="mr-1 text-muted">↳</span>
+                    an agentic workflow tool that converts any cli repo into a
+                    pretty gui for non-technical users
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-fg">scout:</p>
+                  <p className="mt-1 pl-4 text-subtle">
+                    <span className="mr-1 text-muted">↳</span>
+                    an institutional knowledge company brain that attempts to
+                    answer any company-related questions (ai agent) by searching
+                    through slack, google workspace, and its own knowledge base
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-fg">biquadris:</p>
+                  <p className="mt-1 pl-4 text-subtle">
+                    <span className="mr-1 text-muted">↳</span>
+                    cs246 final project which is multiplayer tetris with
+                    additional quirks
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-fg">gritness:</p>
+                  <p className="mt-1 pl-4 text-subtle">
+                    <span className="mr-1 text-muted">↳</span>
+                    a comprehensive fitness app with a social media aspect built
+                    purely in java and swing
+                  </p>
+                </div>
+              </div>
             )}
 
             {active === 'hobbies' && (
