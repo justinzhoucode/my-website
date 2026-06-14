@@ -1,7 +1,7 @@
 import { work } from '../data/work.ts';
 
 type WorkProps = {
-  onFocus: (id: string) => void;
+  onFocus: (id: string, rect: DOMRect) => void;
   onUnfocus: () => void;
 };
 
@@ -11,17 +11,18 @@ export default function Work({ onFocus, onUnfocus }: WorkProps) {
       {work.map((job) => (
         <div key={job.id} className="flex flex-col gap-1">
           <p className="text-fg">{job.status}</p>
-          {/* Only this row is the hover target — kept to the tightest box around
-              the line so it's easy to move between them. */}
-          <p
-            className="flex w-fit cursor-default items-baseline gap-6 pl-4 text-fg"
-            onMouseEnter={() => onFocus(job.id)}
-            onMouseLeave={onUnfocus}
-          >
+          <p className="flex w-fit items-baseline gap-6 pl-4 text-fg">
             <span>
               <span className="mr-1 text-muted">↳</span>
               {job.role} at{' '}
-              <span className="font-medium whitespace-nowrap">
+              {/* Only the logo + company name is the hover target. */}
+              <span
+                className="cursor-default font-medium whitespace-nowrap"
+                onMouseEnter={(e) =>
+                  onFocus(job.id, e.currentTarget.getBoundingClientRect())
+                }
+                onMouseLeave={onUnfocus}
+              >
                 <img
                   src={job.logo}
                   alt={`${job.company} logo`}

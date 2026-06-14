@@ -24,7 +24,11 @@ export default function LiquidEther({
   autoIntensity = 2.2,
   takeoverDuration = 0.25,
   autoResumeDelay = 1000,
-  autoRampDuration = 0.6
+  autoRampDuration = 0.6,
+  // Perf knobs: cap the animation frame rate and the device pixel ratio so a
+  // decorative background doesn't peg the GPU on high-refresh / hi-DPI displays.
+  maxFps = 30,
+  maxPixelRatio = 1
 }) {
   const mountRef = useRef(null);
   const webglRef = useRef(null);
@@ -88,7 +92,7 @@ export default function LiquidEther({
       }
       init(container) {
         this.container = container;
-        this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        this.pixelRatio = Math.min(window.devicePixelRatio || 1, maxPixelRatio);
         this.resize();
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.autoClear = false;
@@ -958,6 +962,10 @@ export default function LiquidEther({
         };
         document.addEventListener('visibilitychange', this._onVisibility);
         this.running = false;
+        this.maxFps = props.maxFps || 0;
+        this._frameInterval = this.maxFps > 0 ? 1000 / this.maxFps : 0;
+        this._lastFrameTime = 0;
+        this._disabled = false;
       }
       init() {
         this.props.$wrapper.prepend(Common.renderer.domElement);
@@ -973,14 +981,22 @@ export default function LiquidEther({
         Common.update();
         this.output.update();
       }
-      loop() {
+      loop(now) {
         if (!this.running) return; // safety
-        this.render();
         rafRef.current = requestAnimationFrame(this._loop);
+        // Throttle to maxFps: skip rendering until enough time has elapsed.
+        if (this._frameInterval > 0) {
+          const t = now || performance.now();
+          if (t - this._lastFrameTime < this._frameInterval) return;
+          // Align to the interval grid so we don't drift slow over time.
+          this._lastFrameTime = t - ((t - this._lastFrameTime) % this._frameInterval);
+        }
+        this.render();
       }
       start() {
-        if (this.running) return;
+        if (this.running || this._disabled) return;
         this.running = true;
+        this._lastFrameTime = 0;
         this._loop();
       }
       pause() {
@@ -1018,7 +1034,8 @@ export default function LiquidEther({
       autoIntensity,
       takeoverDuration,
       autoResumeDelay,
-      autoRampDuration
+      autoRampDuration,
+      maxFps
     });
     webglRef.current = webgl;
 
@@ -1114,7 +1131,9 @@ export default function LiquidEther({
     autoIntensity,
     takeoverDuration,
     autoResumeDelay,
-    autoRampDuration
+    autoRampDuration,
+    maxFps,
+    maxPixelRatio
   ]);
 
   useEffect(() => {

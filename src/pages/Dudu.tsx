@@ -12,16 +12,21 @@ export default function Dudu() {
   }, []);
 
   return (
-    <div className="columns-2 gap-2 sm:columns-3">
-      {photos.map((n) => (
-        <img
-          key={n}
-          src={`/dudu/dudu-${n}.png`}
-          alt={`dudu photo ${n}`}
-          loading="lazy"
-          className="mb-2 w-full rounded-lg"
-        />
-      ))}
-    </div>
+    <>
+      <p className="mb-4 text-subtle">
+        this is dudu, he has been with me for 11 years
+      </p>
+      <div className="columns-2 gap-2 sm:columns-3">
+        {photos.map((n) => (
+          <img
+            key={n}
+            src={`/dudu/dudu-${n}.png`}
+            alt={`dudu photo ${n}`}
+            loading="lazy"
+            className="mb-2 w-full rounded-lg"
+          />
+        ))}
+      </div>
+    </>
   );
 }

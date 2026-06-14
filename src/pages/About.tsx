@@ -14,7 +14,13 @@ export default function About() {
           university of waterloo
         </span>
       </p>
-      <p className="mt-4 text-subtle">{/* write your about copy here */}</p>
+      <p className="mt-6 text-subtle">me and miffy say hello!</p>
+      <img
+        src="/me-and-miffy.png"
+        alt="justin and miffy the cat"
+        loading="lazy"
+        className="mt-3 w-full rounded-lg"
+      />
     </>
   );
 }
