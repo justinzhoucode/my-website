@@ -2,8 +2,8 @@
 
 Personal site / portfolio for a student & software engineer. It's a single
 centered card that switches between pages (about, work, projects, hobbies,
-dudu), sitting over a subtle dark greyscale animated background (`Iridescence`,
-powered by `ogl`). The background is purely decorative.
+dudu), sitting over a subtle dark greyscale animated fluid background
+(`LiquidEther`, powered by `three`). The background is purely decorative.
 
 ## Tech
 
@@ -11,7 +11,7 @@ powered by `ogl`). The background is purely decorative.
 - [Vite 6](https://vite.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS v4](https://tailwindcss.com/) (via `@tailwindcss/vite`)
-- [ogl](https://github.com/oframe/ogl) — WebGL background shader
+- [three](https://threejs.org/) — WebGL fluid background (`LiquidEther`)
 
 ## Getting started
 
@@ -43,7 +43,8 @@ public/
   uwaterloo-seal.png  # about page logo
 src/
   components/
-    Iridescence.tsx   # WebGL background (dark greyscale variant of React Bits)
+    LiquidEther.tsx   # WebGL fluid background (greyscale; vendored React Bits)
+    LiquidEther.css
     Panel.tsx         # Rounded, blurred card surface
   App.tsx             # Everything: background + card + in-card page switching
   main.tsx            # Entry point
@@ -70,8 +71,7 @@ index.html            # Title + favicon links
 - **Theme:** colors and fonts are CSS variables in the `@theme` block of
   `src/index.css`. Reusable bits there: `text-readable`, the `fade-up`
   animation, and the `scroll-dark` scrollbar.
-- **Background:** tune the `color`, `speed`, and `amplitude` props on
-  `<Iridescence />` in `src/App.tsx` (greyscale; raise `color` for a lighter
-  background).
+- **Background:** tune the `colors` (greyscale hex stops), `autoSpeed`,
+  `autoIntensity`, and `mouseForce` props on `<LiquidEther />` in `src/App.tsx`.
 - **Favicon / images:** files live in `public/` and are referenced from the
   site root (e.g. `/dudu/dudu-1.png`).
