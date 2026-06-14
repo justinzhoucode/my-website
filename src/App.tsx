@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Iridescence from './components/Iridescence.tsx';
 import Panel from './components/Panel.tsx';
 
@@ -13,8 +13,67 @@ const pages = [
 
 type PageId = (typeof pages)[number]['id'];
 
+const backgroundColor: [number, number, number] = [0.24, 0.24, 0.24];
+
+// Work history. `detail` is the longer copy revealed on hover — edit freely.
+const work = [
+  {
+    id: 'axl',
+    status: 'currently a:',
+    role: 'software engineer intern',
+    company: 'AXL',
+    logo: '/axl.png',
+    dates: 'jan 2026 - aug 2026',
+    detail:
+      'building full-stack features and internal tooling end to end — taking early ideas and turning them into shipped product.',
+  },
+  {
+    id: 'adsuite',
+    status: 'was a:',
+    role: 'software engineer intern',
+    company: 'Ad Suite AI',
+    logo: '/adsuiteai.png',
+    dates: 'may 2025 - aug 2025',
+    detail:
+      'worked across the stack on the ad platform — shipping features, fixing bugs, and helping get the product in front of real users.',
+  },
+  {
+    id: 'olg',
+    status: 'was a:',
+    role: 'cyber and information security intern',
+    company: 'OLG',
+    logo: '/olg.png',
+    dates: 'may 2024 - aug 2024',
+    detail:
+      'supported the security team on cyber and information security work — monitoring, tooling, and keeping systems safe.',
+  },
+] as const;
+
 export default function App() {
   const [active, setActive] = useState<PageId>('about');
+
+  // Work "focus" hover. `focusedId` controls visibility (the full-page blur +
+  // overlay), `cardId` holds which entry to render — it lingers through the
+  // fade-out so the card doesn't blank out. A short leave delay means moving
+  // between entries never flickers back to the un-focused state.
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [cardId, setCardId] = useState<string | null>(null);
+  const leaveTimer = useRef<number | null>(null);
+
+  const focusJob = (id: string) => {
+    if (leaveTimer.current !== null) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+    setCardId(id);
+    setFocusedId(id);
+  };
+
+  const unfocusJob = () => {
+    leaveTimer.current = window.setTimeout(() => setFocusedId(null), 70);
+  };
+
+  const focusedJob = work.find((job) => job.id === cardId) ?? null;
 
   // Shuffle the collage once per load so the order varies between visits.
   const duduPhotos = useMemo(() => {
@@ -28,13 +87,22 @@ export default function App() {
 
   return (
     <>
-      {/* Decorative background only — no interaction. */}
-      <div className="fixed inset-0 -z-10 h-full w-full" aria-hidden="true">
-        <Iridescence color={[0.24, 0.24, 0.24]} speed={0.6} amplitude={0.1} />
-      </div>
+      {/* The whole page lives in here so it can blur + dim as one unit when an
+          entry is focused. We use a real `filter` (not backdrop-filter) because
+          backdrop-filter flashes white over the WebGL canvas + the Panel's own
+          blur. The focused card below is a sibling, so it stays crisp on top. */}
+      <div
+        className={`transition-[filter] duration-200 ease-out motion-reduce:transition-none ${
+          focusedId ? 'blur-[6px] brightness-[0.5]' : ''
+        }`}
+      >
+        {/* Decorative background only — no interaction. */}
+        <div className="fixed inset-0 -z-10 h-full w-full" aria-hidden="true">
+          <Iridescence color={backgroundColor} speed={0.6} amplitude={0.1} />
+        </div>
 
-      {/* Centered card + a links row beneath it. */}
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 sm:p-6">
+        {/* Centered card + a links row beneath it. */}
+        <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 sm:p-6">
         <Panel className="animate-fade-up flex h-[min(86vh,640px)] w-[min(94vw,720px)] flex-col motion-reduce:animate-none">
           {/* In-card navigation between pages. */}
           <nav className="flex gap-1 pb-4">
@@ -83,84 +151,35 @@ export default function App() {
             )}
 
             {active === 'work' && (
-              <div className="space-y-6">
-                <div>
-                  <p className="text-fg">currently a:</p>
-                  <div className="mt-1 flex items-baseline justify-between gap-4 pl-4">
-                    <p className="text-fg">
-                      <span className="mr-1 text-muted">↳</span>
-                      software engineer intern at{' '}
-                      <a
-                        href="https://axl.vc/"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium whitespace-nowrap underline-offset-2 hover:underline"
-                      >
-                        <img
-                          src="/axl.png"
-                          alt="AXL logo"
-                          className="mr-1.5 inline-block h-5 w-5 rounded object-cover align-middle"
-                        />
-                        AXL
-                      </a>
+              <div className="flex flex-col items-start gap-6">
+                {work.map((job) => (
+                  <div key={job.id} className="flex flex-col gap-1">
+                    <p className="text-fg">{job.status}</p>
+                    {/* Only this row is the hover target — kept to the tightest
+                        box around the line so it's easy to move between them. */}
+                    <p
+                      className="flex w-fit cursor-default items-baseline gap-6 pl-4 text-fg"
+                      onMouseEnter={() => focusJob(job.id)}
+                      onMouseLeave={unfocusJob}
+                    >
+                      <span>
+                        <span className="mr-1 text-muted">↳</span>
+                        {job.role} at{' '}
+                        <span className="font-medium whitespace-nowrap">
+                          <img
+                            src={job.logo}
+                            alt={`${job.company} logo`}
+                            className="mr-1.5 inline-block h-5 w-5 rounded object-cover align-middle"
+                          />
+                          {job.company}
+                        </span>
+                      </span>
+                      <span className="shrink-0 font-mono text-sm text-muted">
+                        {job.dates}
+                      </span>
                     </p>
-                    <span className="shrink-0 font-mono text-sm text-muted">
-                      jan 2026 - aug 2026
-                    </span>
                   </div>
-                </div>
-
-                <div>
-                  <p className="text-fg">was a:</p>
-                  <div className="mt-1 flex items-baseline justify-between gap-4 pl-4">
-                    <p className="text-fg">
-                      <span className="mr-1 text-muted">↳</span>
-                      software engineer intern at{' '}
-                      <a
-                        href="https://adsuiteai.com/"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium whitespace-nowrap underline-offset-2 hover:underline"
-                      >
-                        <img
-                          src="/adsuiteai.png"
-                          alt="Ad Suite AI logo"
-                          className="mr-1.5 inline-block h-5 w-5 rounded object-cover align-middle"
-                        />
-                        Ad Suite AI
-                      </a>
-                    </p>
-                    <span className="shrink-0 font-mono text-sm text-muted">
-                      may 2025 - aug 2025
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-fg">was a:</p>
-                  <div className="mt-1 flex items-baseline justify-between gap-4 pl-4">
-                    <p className="text-fg">
-                      <span className="mr-1 text-muted">↳</span>
-                      cyber and information security intern at{' '}
-                      <a
-                        href="https://www.olg.ca/en/home.html"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium whitespace-nowrap underline-offset-2 hover:underline"
-                      >
-                        <img
-                          src="/olg.png"
-                          alt="Ontario Lottery and Gaming logo"
-                          className="mr-1.5 inline-block h-5 w-5 rounded object-cover align-middle"
-                        />
-                        OLG
-                      </a>
-                    </p>
-                    <span className="shrink-0 font-mono text-sm text-muted">
-                      may 2024 - aug 2024
-                    </span>
-                  </div>
-                </div>
+                ))}
               </div>
             )}
 
@@ -273,8 +292,38 @@ export default function App() {
                 <path d="M22.5 6.908V6.75a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3v.158l9.714 5.978a1.5 1.5 0 0 0 1.572 0L22.5 6.908Z" />
               </svg>
             </a>
+            </div>
+          </Panel>
+        </div>
+      </div>
+
+      {/* Floating focused card — sits crisp above the blurred page, centered on
+          screen. Its own entity: doesn't touch the page layout. */}
+      <div
+        aria-hidden={!focusedId}
+        className={`pointer-events-none fixed inset-0 z-40 flex transform-gpu items-center justify-center p-6 transition-[opacity,transform] duration-200 ease-out ${
+          focusedId ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+      >
+        {focusedJob && (
+          <div className="flex max-w-sm flex-col items-center text-center">
+            <img
+              src={focusedJob.logo}
+              alt={`${focusedJob.company} logo`}
+              className="h-20 w-20 rounded-2xl object-cover"
+            />
+            <p className="mt-5 text-3xl font-semibold tracking-[-0.02em] text-fg">
+              {focusedJob.company}
+            </p>
+            <p className="mt-1 text-xl text-muted">{focusedJob.role}</p>
+            <p className="mt-5 text-lg leading-relaxed text-subtle">
+              {focusedJob.detail}
+            </p>
+            <p className="mt-5 font-mono text-sm text-muted">
+              {focusedJob.dates}
+            </p>
           </div>
-        </Panel>
+        )}
       </div>
     </>
   );
