@@ -4,11 +4,11 @@ type Project = {
 };
 
 const projects: Project[] = [
-  {
-    name: 'clui',
-    description:
-      'an agentic workflow tool that converts any cli repo into a pretty gui for non-technical users',
-  },
+  // {
+  //   name: 'clui',
+  //   description:
+  //     'an agentic workflow tool that converts any cli repo into a pretty gui for non-technical users',
+  // },
   {
     name: 'scout',
     description:
