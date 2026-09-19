@@ -28,7 +28,18 @@ export default function LiquidEther({
   // Perf knobs: cap the animation frame rate and the device pixel ratio so a
   // decorative background doesn't peg the GPU on high-refresh / hi-DPI displays.
   maxFps = 30,
-  maxPixelRatio = 1
+  maxPixelRatio = 1,
+  // Ordered (Bayer 8x8) dithering on the output pass. `ditherScale` is the size
+  // of one dither cell in canvas pixels, `ditherLevels` the number of
+  // quantisation steps, `ditherAmount` blends between hard banding (0) and a
+  // full stipple (1). Keep these in step with WavyBackdrop so the two layers
+  // share one visual grid.
+  ditherScale = 2,
+  ditherLevels = 5,
+  ditherAmount = 1,
+  // Multiplies the flow magnitude before it's quantised, so faint motion still
+  // lands on a coloured band rather than rounding down to nothing.
+  flowGain = 1.5
 }) {
   const mountRef = useRef(null);
   const webglRef = useRef(null);
@@ -408,13 +419,40 @@ export default function LiquidEther({
     uniform sampler2D velocity;
     uniform sampler2D palette;
     uniform vec4 bgColor;
+    uniform float ditherScale;
+    uniform float ditherLevels;
+    uniform float ditherAmount;
+    uniform float flowGain;
     varying vec2 uv;
+
+    // Same ordered 8x8 Bayer threshold as WavyBackdrop, so the two background
+    // layers stipple on a matching grid. Returns [0,1).
+    float bayer2(vec2 a) { a = floor(a); return fract(a.x * 0.5 + a.y * a.y * 0.75); }
+    float bayer4(vec2 a) { return bayer2(a * 0.5) * 0.25 + bayer2(a); }
+    float bayer8(vec2 a) { return bayer4(a * 0.5) * 0.25 + bayer2(a); }
+
     void main(){
     vec2 vel = texture2D(velocity, uv).xy;
-    float lenv = clamp(length(vel), 0.0, 1.0);
-    vec3 c = texture2D(palette, vec2(lenv, 0.5)).rgb;
-    vec3 outRGB = mix(bgColor.rgb, c, lenv);
-    float outA = mix(bgColor.a, 1.0, lenv);
+    // flowGain lifts faint motion into a higher band so the trailing edges of
+    // the flow still pick up colour instead of rounding straight down to zero.
+    float lenv = clamp(length(vel) * flowGain, 0.0, 1.0);
+
+    // Dither the flow magnitude before it drives colour and alpha, rather than
+    // dithering the final pixel: quantising here steps the palette lookup and
+    // the coverage together, so the flow reads as stippled contour bands
+    // instead of a smooth blur with noise laid over it.
+    float levels = max(ditherLevels, 1.0);
+    float threshold = bayer8(gl_FragCoord.xy / max(ditherScale, 1.0)) - 0.5;
+    float q = clamp(lenv + threshold * ditherAmount / levels, 0.0, 1.0);
+    q = floor(q * levels + 0.5) / levels;
+
+    vec3 c = texture2D(palette, vec2(q, 0.5)).rgb;
+    // Alpha already fades the flow out against whatever is behind it. Lerping
+    // the RGB toward a *transparent* background darkened it a second time, so
+    // faint flow came out as c*q*q — nearly black. Only blend the RGB to the
+    // extent the background is actually opaque.
+    vec3 outRGB = mix(c, mix(bgColor.rgb, c, q), bgColor.a);
+    float outA = mix(bgColor.a, 1.0, q);
     gl_FragColor = vec4(outRGB, outA);
 }
 `;
@@ -908,7 +946,11 @@ export default function LiquidEther({
               velocity: { value: this.simulation.fbos.vel_0.texture },
               boundarySpace: { value: new THREE.Vector2() },
               palette: { value: paletteTex },
-              bgColor: { value: bgVec4 }
+              bgColor: { value: bgVec4 },
+              ditherScale: { value: ditherScale },
+              ditherLevels: { value: ditherLevels },
+              ditherAmount: { value: ditherAmount },
+              flowGain: { value: flowGain }
             }
           })
         );
@@ -1133,7 +1175,11 @@ export default function LiquidEther({
     autoResumeDelay,
     autoRampDuration,
     maxFps,
-    maxPixelRatio
+    maxPixelRatio,
+    ditherScale,
+    ditherLevels,
+    ditherAmount,
+    flowGain
   ]);
 
   useEffect(() => {

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import Panel from './components/Panel.tsx';
 import Carousel from './components/Carousel.tsx';
 import SocialLinks from './components/SocialLinks.tsx';
+import WavyBackdrop from './components/WavyBackdrop.tsx';
 import About from './pages/About.tsx';
 import Work from './pages/Work.tsx';
 import Projects from './pages/Projects.tsx';
@@ -89,23 +90,35 @@ export default function App() {
           focusedId ? 'blur-[6px] brightness-[0.5]' : ''
         }`}
       >
-        {/* Decorative background only — no interaction. */}
+        {/* Decorative background only — no interaction. Two stacked WebGL
+            layers: the wavy backdrop is the resting state (it's there before
+            the heavy three.js chunk loads, and wherever the fluid is still),
+            with the cursor-driven flow composited over it. Both are dithered on
+            the same Bayer grid, so they read as one surface rather than two. */}
         <div className="fixed inset-0 -z-10 h-full w-full" aria-hidden="true">
-          <Suspense fallback={null}>
-            <LiquidEther
-              colors={['#3a3a3a', '#6e6e6e', '#a0a0a0']}
-              autoDemo
-              autoSpeed={0.5}
-              autoIntensity={2.2}
-              // Perf: it's a soft decorative background, so trade fidelity for a
-              // much lighter GPU load (cooler/quieter fans).
-              maxFps={30}
-              maxPixelRatio={1}
-              resolution={0.4}
-              iterationsPoisson={16}
-              iterationsViscous={16}
-            />
-          </Suspense>
+          <WavyBackdrop className="absolute inset-0" />
+          <div className="absolute inset-0">
+            <Suspense fallback={null}>
+              <LiquidEther
+                colors={['#484848', '#7c7c7c', '#b4b4b4']}
+                autoDemo
+                autoSpeed={0.5}
+                autoIntensity={2.2}
+                // Perf: it's a soft decorative background, so trade fidelity for a
+                // much lighter GPU load (cooler/quieter fans).
+                maxFps={30}
+                maxPixelRatio={1}
+                resolution={0.4}
+                iterationsPoisson={16}
+                iterationsViscous={16}
+                // Matches WavyBackdrop's dither so the grids line up.
+                ditherScale={2}
+                ditherLevels={9}
+                ditherAmount={4}
+                flowGain={1.5}
+              />
+            </Suspense>
+          </div>
         </div>
 
         {/* Centered card + a links row beneath it. */}
