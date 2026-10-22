@@ -1,6 +1,7 @@
 type Project = {
   name: string;
   description: string;
+  href?: string;
 };
 
 const projects: Project[] = [
@@ -16,11 +17,13 @@ const projects: Project[] = [
   },
   {
     name: 'biquadris',
+    href: 'https://github.com/justinzhoucode/biquadris',
     description:
       'cs246 final project which is multiplayer tetris with additional quirks',
   },
   {
     name: 'gritness',
+    href: 'https://github.com/justinzhoucode/ICS4UE_Final_Gritness',
     description:
       'a comprehensive fitness app with a social media aspect built purely in java and swing',
   },
@@ -31,7 +34,21 @@ export default function Projects() {
     <div className="space-y-6">
       {projects.map((p) => (
         <div key={p.name}>
-          <p className="text-fg">{p.name}:</p>
+          <p className="text-fg">
+            {p.href ? (
+              <a
+                href={p.href}
+                target="_blank"
+                rel="noreferrer"
+                className="underline-offset-4 hover:underline"
+              >
+                {p.name}
+              </a>
+            ) : (
+              p.name
+            )}
+            :
+          </p>
           <p className="mt-1 pl-4 text-subtle">
             <span className="mr-1 text-muted">↳</span>
             {p.description}

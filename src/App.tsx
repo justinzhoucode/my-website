@@ -60,8 +60,10 @@ export default function App() {
   const [cardId, setCardId] = useState<string | null>(null);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const leaveTimer = useRef<number | null>(null);
+  const hoverCooldownUntil = useRef(0);
 
-  const focusJob = (id: string, rect: DOMRect) => {
+  const focusJob = (id: string, rect: DOMRect, viaClick = false) => {
+    if (!viaClick && Date.now() < hoverCooldownUntil.current) return;
     if (leaveTimer.current !== null) {
       clearTimeout(leaveTimer.current);
       leaveTimer.current = null;
@@ -72,7 +74,13 @@ export default function App() {
   };
 
   const unfocusJob = () => {
-    leaveTimer.current = window.setTimeout(() => setFocusedId(null), 70);
+    if (!focusedId) return;
+    if (leaveTimer.current !== null) clearTimeout(leaveTimer.current);
+    leaveTimer.current = window.setTimeout(() => {
+      leaveTimer.current = null;
+      hoverCooldownUntil.current = Date.now() + 3000;
+      setFocusedId(null);
+    }, 70);
   };
 
   // Hovering the card itself cancels a pending close, so the overlay only
@@ -208,7 +216,7 @@ export default function App() {
             }}
             onMouseEnter={cancelUnfocus}
             onMouseLeave={unfocusJob}
-            className="mx-auto flex w-fit max-w-full flex-col items-center px-6 py-10 text-center"
+            className="mx-auto flex w-fit max-w-full flex-col items-center px-3 py-5 text-center"
           >
             {focusedJob && (
               <>
@@ -229,9 +237,11 @@ export default function App() {
                   </p>
                 </a>
                 <p className="mt-1 text-xl text-muted">{focusedJob.role}</p>
-                <p className="mt-5 text-lg leading-relaxed text-subtle">
-                  {focusedJob.detail}
-                </p>
+                {focusedJob.detail && (
+                  <p className="mt-5 text-lg leading-relaxed text-subtle">
+                    {focusedJob.detail}
+                  </p>
+                )}
                 <p className="mt-5 font-mono text-sm text-muted">
                   {focusedJob.dates}
                 </p>

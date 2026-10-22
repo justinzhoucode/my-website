@@ -12,8 +12,18 @@ export type Job = {
 
 export const work: Job[] = [
   {
+    id: 'stlabs',
+    status: 'incoming:',
+    role: 'software engineer intern',
+    company: 'STLabs',
+    logo: '/stlabs.png',
+    href: 'https://stlabs.com',
+    dates: 'jan 2027 - apr 2027',
+    detail: '',
+  },
+  {
     id: 'axl',
-    status: 'currently a:',
+    status: 'was a:',
     role: 'software engineer intern',
     company: 'AXL',
     logo: '/axl.png',

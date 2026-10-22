@@ -1,7 +1,7 @@
 import { work } from '../data/work.ts';
 
 type WorkProps = {
-  onFocus: (id: string, rect: DOMRect) => void;
+  onFocus: (id: string, rect: DOMRect, viaClick?: boolean) => void;
   onUnfocus: () => void;
 };
 
@@ -17,9 +17,12 @@ export default function Work({ onFocus, onUnfocus }: WorkProps) {
               {job.role} at{' '}
               {/* Only the logo + company name is the hover target. */}
               <span
-                className="cursor-default font-medium whitespace-nowrap"
+                className="cursor-pointer font-medium whitespace-nowrap"
                 onMouseEnter={(e) =>
                   onFocus(job.id, e.currentTarget.getBoundingClientRect())
+                }
+                onClick={(e) =>
+                  onFocus(job.id, e.currentTarget.getBoundingClientRect(), true)
                 }
                 onMouseLeave={onUnfocus}
               >
