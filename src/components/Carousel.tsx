@@ -86,15 +86,47 @@ export default function Carousel({
             touch-action rather than the track's. pan-y lets touch scroll the
             slide vertically but hands horizontal swipes to the drag. */}
         {children.map((child, i) => (
-          <div
-            key={i}
-            style={{ width: slideWidth || '100%' }}
-            className="scroll-dark h-full shrink-0 touch-pan-y overflow-y-auto pr-2"
-          >
+          <Slide key={i} width={slideWidth}>
             {child}
-          </div>
+          </Slide>
         ))}
       </motion.div>
+    </div>
+  );
+}
+
+function Slide({ width, children }: { width: number; children: ReactNode }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [fade, setFade] = useState({ top: false, bottom: false });
+
+  const update = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const top = el.scrollTop > 1;
+    const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    setFade((prev) =>
+      prev.top === top && prev.bottom === bottom ? prev : { top, bottom },
+    );
+  };
+
+  useLayoutEffect(() => {
+    const ro = new ResizeObserver(update);
+    if (scrollRef.current) ro.observe(scrollRef.current);
+    if (contentRef.current) ro.observe(contentRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={scrollRef}
+      onScroll={update}
+      data-fade-top={fade.top || undefined}
+      data-fade-bottom={fade.bottom || undefined}
+      style={{ width: width || '100%' }}
+      className="scroll-dark scroll-fade h-full shrink-0 touch-pan-y overflow-y-auto pr-2"
+    >
+      <div ref={contentRef}>{children}</div>
     </div>
   );
 }

@@ -35,7 +35,7 @@ export default function SocialLinks() {
         </svg>
       </a>
       <a
-        href="mailto:justinmengzhou@gmail.com"
+        href="mailto:j95zhou@uwaterloo.ca"
         aria-label="Email"
         className="inline-flex transition duration-150 hover:scale-115 hover:text-fg"
       >

@@ -117,8 +117,8 @@ export default function App() {
           Panel's own blur. The focused card below is a sibling, so it stays
           crisp on top. */}
       <div
-        className={`transition-[filter] duration-700 ease-out motion-reduce:transition-none ${
-          focusedId ? 'blur-[6px] brightness-[0.5]' : ''
+        className={`transition-[filter,opacity] duration-700 ease-out motion-reduce:transition-none ${
+          focusedId ? 'blur-[6px] opacity-30' : ''
         }`}
       >
         {/* Decorative background only — no interaction. Two stacked WebGL
@@ -127,11 +127,17 @@ export default function App() {
             with the cursor-driven flow composited over it. Both are dithered on
             the same Bayer grid, so they read as one surface rather than two. */}
         <div className="fixed inset-0 -z-10 h-full w-full" aria-hidden="true">
-          <WavyBackdrop className="absolute inset-0" />
+          <WavyBackdrop
+            className="absolute inset-0"
+            color={[1, 0.996, 0.984]}
+            floor={0.94}
+            peak={0.985}
+            centerDim={0}
+          />
           <div className="absolute inset-0">
             <Suspense fallback={null}>
               <LiquidEther
-                colors={['#484848', '#7c7c7c', '#b4b4b4']}
+                colors={['#ebe9e4', '#e3e1db', '#dad7d0']}
                 autoDemo
                 autoSpeed={0.5}
                 autoIntensity={2.2}
@@ -170,8 +176,8 @@ export default function App() {
                   onClick={() => setActive(page.id)}
                   className={`shrink-0 cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition duration-150 select-none hover:scale-110 ${
                     active === page.id
-                      ? 'bg-white/10 text-fg'
-                      : 'text-muted hover:bg-white/5 hover:text-fg'
+                      ? 'bg-fg/[0.06] text-fg'
+                      : 'text-muted hover:bg-fg/[0.04] hover:text-fg'
                   }`}
                 >
                   {page.label}
