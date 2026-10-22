@@ -61,9 +61,26 @@ export default function App() {
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const leaveTimer = useRef<number | null>(null);
   const hoverCooldownUntil = useRef(0);
+  const cooldownTimer = useRef<number | null>(null);
+  const lastMouse = useRef<{ x: number; y: number } | null>(null);
 
-  const focusJob = (id: string, rect: DOMRect, viaClick = false) => {
-    if (!viaClick && Date.now() < hoverCooldownUntil.current) return;
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse') lastMouse.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener('pointermove', onMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      if (cooldownTimer.current !== null) clearTimeout(cooldownTimer.current);
+    };
+  }, []);
+
+  const focusJob = (id: string, rect: DOMRect, force = false) => {
+    if (!force && Date.now() < hoverCooldownUntil.current) return;
+    if (cooldownTimer.current !== null) {
+      clearTimeout(cooldownTimer.current);
+      cooldownTimer.current = null;
+    }
     if (leaveTimer.current !== null) {
       clearTimeout(leaveTimer.current);
       leaveTimer.current = null;
@@ -80,7 +97,20 @@ export default function App() {
       leaveTimer.current = null;
       hoverCooldownUntil.current = Date.now() + 3000;
       setFocusedId(null);
+      cooldownTimer.current = window.setTimeout(focusUnderCursor, 3000);
     }, 70);
+  };
+
+  const focusUnderCursor = () => {
+    cooldownTimer.current = null;
+    const pos = lastMouse.current;
+    if (!pos) return;
+    const target = document
+      .elementFromPoint(pos.x, pos.y)
+      ?.closest<HTMLElement>('[data-job-id]');
+    if (target?.dataset.jobId) {
+      focusJob(target.dataset.jobId, target.getBoundingClientRect(), true);
+    }
   };
 
   // Hovering the card itself cancels a pending close, so the overlay only

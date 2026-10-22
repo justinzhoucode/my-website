@@ -8,6 +8,7 @@ import {
 import { animate, motion, useMotionValue, type PanInfo } from 'motion/react';
 
 const spring = { type: 'spring', stiffness: 300, damping: 30 } as const;
+const SLIDE_GAP = 48;
 
 type CarouselProps = {
   activeIndex: number;
@@ -39,7 +40,9 @@ export default function Carousel({
     return () => ro.disconnect();
   }, []);
 
-  const snapTo = (index: number) => animate(x, -index * slideWidth, spring);
+  const stride = slideWidth + SLIDE_GAP;
+
+  const snapTo = (index: number) => animate(x, -index * stride, spring);
 
   // Follow external changes (tab clicks, swipes). A resize jumps straight to
   // the new offset rather than springing.
@@ -47,7 +50,7 @@ export default function Carousel({
   useEffect(() => {
     if (lastWidth.current !== slideWidth) {
       lastWidth.current = slideWidth;
-      x.set(-activeIndex * slideWidth);
+      x.set(-activeIndex * stride);
       return;
     }
     const controls = snapTo(activeIndex);
@@ -59,7 +62,7 @@ export default function Carousel({
   // the page doesn't change the effect above won't fire.
   const handleDragEnd = (_event: unknown, info: PanInfo) => {
     if (!slideWidth) return;
-    const position = -x.get() / slideWidth;
+    const position = -x.get() / stride;
     let target = Math.round(position);
     if (info.velocity.x < -500) target = Math.ceil(position);
     else if (info.velocity.x > 500) target = Math.floor(position);
@@ -73,13 +76,13 @@ export default function Carousel({
       <motion.div
         className="flex h-full cursor-grab active:cursor-grabbing"
         drag="x"
-        dragConstraints={{ left: -slideWidth * (count - 1), right: 0 }}
+        dragConstraints={{ left: -stride * (count - 1), right: 0 }}
         dragElastic={0.08}
         // We own the release: no built-in momentum glide competing with the
         // snap, and a mostly-vertical gesture won't nudge the track sideways.
         dragMomentum={false}
         dragDirectionLock
-        style={{ x }}
+        style={{ x, columnGap: SLIDE_GAP }}
         onDragEnd={handleDragEnd}
       >
         {/* Each slide is its own scroll container, so the browser checks its

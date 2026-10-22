@@ -17,6 +17,7 @@ export default function Work({ onFocus, onUnfocus }: WorkProps) {
               {job.role} at{' '}
               {/* Only the logo + company name is the hover target. */}
               <span
+                data-job-id={job.id}
                 className="cursor-pointer font-medium whitespace-nowrap"
                 onMouseEnter={(e) =>
                   onFocus(job.id, e.currentTarget.getBoundingClientRect())
