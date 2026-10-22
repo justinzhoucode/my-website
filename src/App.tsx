@@ -208,7 +208,7 @@ export default function App() {
             }}
             onMouseEnter={cancelUnfocus}
             onMouseLeave={unfocusJob}
-            className="flex flex-col items-center text-center"
+            className="mx-auto flex w-fit max-w-full flex-col items-center px-6 py-10 text-center"
           >
             {focusedJob && (
               <>
