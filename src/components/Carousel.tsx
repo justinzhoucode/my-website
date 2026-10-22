@@ -1,5 +1,13 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { motion, useMotionValue, type PanInfo } from 'motion/react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { animate, motion, useMotionValue, type PanInfo } from 'motion/react';
+
+const spring = { type: 'spring', stiffness: 300, damping: 30 } as const;
 
 type CarouselProps = {
   activeIndex: number;
@@ -31,16 +39,33 @@ export default function Carousel({
     return () => ro.disconnect();
   }, []);
 
-  const goTo = (index: number) =>
-    onChange(Math.max(0, Math.min(index, count - 1)));
+  const snapTo = (index: number) => animate(x, -index * slideWidth, spring);
 
-  const handleDragEnd = (_event: unknown, info: PanInfo) => {
-    const threshold = slideWidth * 0.2;
-    if (info.offset.x < -threshold || info.velocity.x < -500) {
-      goTo(activeIndex + 1);
-    } else if (info.offset.x > threshold || info.velocity.x > 500) {
-      goTo(activeIndex - 1);
+  // Follow external changes (tab clicks, swipes). A resize jumps straight to
+  // the new offset rather than springing.
+  const lastWidth = useRef(slideWidth);
+  useEffect(() => {
+    if (lastWidth.current !== slideWidth) {
+      lastWidth.current = slideWidth;
+      x.set(-activeIndex * slideWidth);
+      return;
     }
+    const controls = snapTo(activeIndex);
+    return () => controls.stop();
+  }, [activeIndex, slideWidth]);
+
+  // Always settle on a page: whichever one covers more of the viewport, or the
+  // next one in the flick direction for a fast swipe. Snap explicitly, since if
+  // the page doesn't change the effect above won't fire.
+  const handleDragEnd = (_event: unknown, info: PanInfo) => {
+    if (!slideWidth) return;
+    const position = -x.get() / slideWidth;
+    let target = Math.round(position);
+    if (info.velocity.x < -500) target = Math.ceil(position);
+    else if (info.velocity.x > 500) target = Math.floor(position);
+    target = Math.max(0, Math.min(target, count - 1));
+    snapTo(target);
+    if (target !== activeIndex) onChange(target);
   };
 
   return (
@@ -50,16 +75,21 @@ export default function Carousel({
         drag="x"
         dragConstraints={{ left: -slideWidth * (count - 1), right: 0 }}
         dragElastic={0.08}
+        // We own the release: no built-in momentum glide competing with the
+        // snap, and a mostly-vertical gesture won't nudge the track sideways.
+        dragMomentum={false}
+        dragDirectionLock
         style={{ x }}
-        animate={{ x: -activeIndex * slideWidth }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         onDragEnd={handleDragEnd}
       >
+        {/* Each slide is its own scroll container, so the browser checks its
+            touch-action rather than the track's. pan-y lets touch scroll the
+            slide vertically but hands horizontal swipes to the drag. */}
         {children.map((child, i) => (
           <div
             key={i}
             style={{ width: slideWidth || '100%' }}
-            className="scroll-dark h-full shrink-0 overflow-y-auto pr-2"
+            className="scroll-dark h-full shrink-0 touch-pan-y overflow-y-auto pr-2"
           >
             {child}
           </div>

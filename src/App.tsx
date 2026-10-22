@@ -1,4 +1,11 @@
-import { lazy, Suspense, useRef, useState, type ReactNode } from 'react';
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { motion } from 'motion/react';
 import Panel from './components/Panel.tsx';
 import Carousel from './components/Carousel.tsx';
@@ -27,6 +34,22 @@ type PageId = (typeof pages)[number]['id'];
 export default function App() {
   const [active, setActive] = useState<PageId>('about');
   const activeIndex = pages.findIndex((p) => p.id === active);
+
+  // On narrow screens the tab bar scrolls sideways. Keep the active tab in view
+  // (e.g. after swiping the carousel). Scrolls only the nav, never the page.
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const nav = navRef.current;
+    const tab = nav?.children[activeIndex] as HTMLElement | undefined;
+    if (!nav || !tab) return;
+    const left = tab.offsetLeft - nav.offsetLeft;
+    const right = left + tab.offsetWidth;
+    if (left < nav.scrollLeft) {
+      nav.scrollTo({ left: left - 8, behavior: 'smooth' });
+    } else if (right > nav.scrollLeft + nav.clientWidth) {
+      nav.scrollTo({ left: right - nav.clientWidth + 8, behavior: 'smooth' });
+    }
+  }, [activeIndex]);
 
   // Work "focus" hover. `focusedId` controls visibility (the full-page blur +
   // overlay), `cardId` holds which entry to render — it lingers through the
@@ -125,13 +148,19 @@ export default function App() {
         <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4 sm:p-6">
           <Panel className="animate-fade-up flex h-[min(86vh,640px)] w-[min(94vw,720px)] flex-col motion-reduce:animate-none">
             {/* In-card navigation between pages. */}
-            <nav className="flex gap-3 pb-4">
+            {/* Scrolls horizontally when the tabs don't fit (phones). The
+                padding keeps the hover scale from being clipped by the
+                overflow; the negative margin cancels it out visually. */}
+            <nav
+              ref={navRef}
+              className="no-scrollbar -mx-2 -my-1 mb-3 flex shrink-0 gap-1 overflow-x-auto px-2 py-1 sm:gap-3"
+            >
               {pages.map((page) => (
                 <button
                   key={page.id}
                   type="button"
                   onClick={() => setActive(page.id)}
-                  className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm transition duration-150 select-none hover:scale-110 ${
+                  className={`shrink-0 cursor-pointer whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition duration-150 select-none hover:scale-110 ${
                     active === page.id
                       ? 'bg-white/10 text-fg'
                       : 'text-muted hover:bg-white/5 hover:text-fg'
