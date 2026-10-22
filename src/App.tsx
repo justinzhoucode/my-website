@@ -11,6 +11,7 @@ import Panel from './components/Panel.tsx';
 import Carousel from './components/Carousel.tsx';
 import SocialLinks from './components/SocialLinks.tsx';
 import WavyBackdrop from './components/WavyBackdrop.tsx';
+import ThemeToggle from './components/ThemeToggle.tsx';
 import About from './pages/About.tsx';
 import Work from './pages/Work.tsx';
 import Projects from './pages/Projects.tsx';
@@ -31,7 +32,35 @@ const pages = [
 
 type PageId = (typeof pages)[number]['id'];
 
+const backdrops = {
+  light: {
+    wave: { color: [1, 0.996, 0.984], floor: 0.94, peak: 0.985 },
+    flow: ['#ebe9e4', '#e3e1db', '#dad7d0'],
+  },
+  dark: {
+    wave: { color: [0.64, 0.79, 1], floor: 0.13, peak: 0.19 },
+    flow: ['#1c232c', '#232b36', '#2b3440'],
+  },
+} as const;
+
+type Theme = keyof typeof backdrops;
+
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+  );
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    if (next === 'dark') document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+    try {
+      localStorage.setItem('theme', next);
+    } catch {}
+  };
+
+  const backdrop = backdrops[theme];
   const [active, setActive] = useState<PageId>('about');
   const activeIndex = pages.findIndex((p) => p.id === active);
 
@@ -158,16 +187,18 @@ export default function App() {
             the same Bayer grid, so they read as one surface rather than two. */}
         <div className="fixed inset-0 -z-10 h-full w-full" aria-hidden="true">
           <WavyBackdrop
+            key={theme}
             className="absolute inset-0"
-            color={[1, 0.996, 0.984]}
-            floor={0.94}
-            peak={0.985}
+            color={[...backdrop.wave.color]}
+            floor={backdrop.wave.floor}
+            peak={backdrop.wave.peak}
             centerDim={0}
           />
           <div className="absolute inset-0">
             <Suspense fallback={null}>
               <LiquidEther
-                colors={['#ebe9e4', '#e3e1db', '#dad7d0']}
+                key={theme}
+                colors={[...backdrop.flow]}
                 autoDemo
                 autoSpeed={0.5}
                 autoIntensity={2.2}
@@ -226,6 +257,8 @@ export default function App() {
             <SocialLinks />
           </Panel>
         </div>
+
+        <ThemeToggle dark={theme === 'dark'} onToggle={toggleTheme} />
       </div>
 
       {/* Floating focused card — sits crisp above the blurred page. It's

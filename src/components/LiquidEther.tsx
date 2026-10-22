@@ -143,6 +143,7 @@ export default function LiquidEther({
         this.listenerTarget = null;
         this.isHoverInside = false;
         this.hasUserControl = false;
+        this.lastTouchTime = -Infinity;
         this.isAutoActive = false;
         this.autoIntensity = 2.0;
         this.takeoverActive = false;
@@ -213,42 +214,51 @@ export default function LiquidEther({
         this.coords.set(nx, ny);
         this.mouseMoved = true;
       }
-      onDocumentMouseMove(event) {
-        if (!this.updateHoverState(event.clientX, event.clientY)) return;
+      glideTo(clientX, clientY) {
+        if (!this.container) return;
+        const rect = this.container.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+        const nx = (clientX - rect.left) / rect.width;
+        const ny = (clientY - rect.top) / rect.height;
+        this.takeoverFrom.copy(this.coords);
+        this.takeoverTo.set(nx * 2 - 1, -(ny * 2 - 1));
+        this.takeoverStartTime = performance.now();
+        this.takeoverActive = true;
+        this.hasUserControl = true;
+        this.isAutoActive = false;
+      }
+      steer(clientX, clientY) {
         if (this.onInteract) this.onInteract();
         if (this.isAutoActive && !this.hasUserControl && !this.takeoverActive) {
-          if (!this.container) return;
-          const rect = this.container.getBoundingClientRect();
-          if (rect.width === 0 || rect.height === 0) return;
-          const nx = (event.clientX - rect.left) / rect.width;
-          const ny = (event.clientY - rect.top) / rect.height;
-          this.takeoverFrom.copy(this.coords);
-          this.takeoverTo.set(nx * 2 - 1, -(ny * 2 - 1));
-          this.takeoverStartTime = performance.now();
-          this.takeoverActive = true;
-          this.hasUserControl = true;
-          this.isAutoActive = false;
+          this.glideTo(clientX, clientY);
           return;
         }
-        this.setCoords(event.clientX, event.clientY);
+        if (this.takeoverActive) return;
+        this.setCoords(clientX, clientY);
         this.hasUserControl = true;
+      }
+      onDocumentMouseMove(event) {
+        if (performance.now() - this.lastTouchTime < 1000) return;
+        if (!this.updateHoverState(event.clientX, event.clientY)) return;
+        this.steer(event.clientX, event.clientY);
       }
       onDocumentTouchStart(event) {
+        this.lastTouchTime = performance.now();
         if (event.touches.length !== 1) return;
         const t = event.touches[0];
         if (!this.updateHoverState(t.clientX, t.clientY)) return;
         if (this.onInteract) this.onInteract();
-        this.setCoords(t.clientX, t.clientY);
-        this.hasUserControl = true;
+        this.glideTo(t.clientX, t.clientY);
       }
       onDocumentTouchMove(event) {
+        this.lastTouchTime = performance.now();
         if (event.touches.length !== 1) return;
         const t = event.touches[0];
         if (!this.updateHoverState(t.clientX, t.clientY)) return;
-        if (this.onInteract) this.onInteract();
-        this.setCoords(t.clientX, t.clientY);
+        this.steer(t.clientX, t.clientY);
       }
       onTouchEnd() {
+        this.lastTouchTime = performance.now();
         this.isHoverInside = false;
       }
       onDocumentLeave() {
@@ -314,6 +324,7 @@ export default function LiquidEther({
         }
         if (!this.active) {
           this.active = true;
+          this.mouse.hasUserControl = false;
           this.current.copy(this.mouse.coords);
           this.lastTime = now;
           this.activationTime = now;
