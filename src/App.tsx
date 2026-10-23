@@ -1,4 +1,5 @@
 import {
+  useCallback,
   lazy,
   Suspense,
   useEffect,
@@ -12,12 +13,15 @@ import Carousel from './components/Carousel.tsx';
 import SocialLinks from './components/SocialLinks.tsx';
 import WavyBackdrop from './components/WavyBackdrop.tsx';
 import ThemeToggle from './components/ThemeToggle.tsx';
+import HobbyLightbox from './components/HobbyLightbox.tsx';
 import About from './pages/About.tsx';
 import Work from './pages/Work.tsx';
 import Projects from './pages/Projects.tsx';
 import Hobbies from './pages/Hobbies.tsx';
 import Dudu from './pages/Dudu.tsx';
+import Miffy from './pages/Miffy.tsx';
 import { work } from './data/work.ts';
+import { hobbies } from './data/hobbies.ts';
 
 // Lazy-loaded so the heavy WebGL/three bundle doesn't block first paint.
 const LiquidEther = lazy(() => import('./components/LiquidEther.tsx'));
@@ -28,6 +32,7 @@ const pages = [
   { id: 'projects', label: 'projects' },
   { id: 'hobbies', label: 'hobbies' },
   { id: 'dudu', label: 'dudu' },
+  { id: 'miffy', label: 'miffy' },
 ] as const;
 
 type PageId = (typeof pages)[number]['id'];
@@ -86,6 +91,15 @@ export default function App() {
   // of the hovered logo/name, so the card can grow out of (and shrink back
   // into) exactly where the cursor is rather than popping in at the center.
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [hobbyId, setHobbyId] = useState<string | null>(null);
+  const [hobbyOrigin, setHobbyOrigin] = useState({ x: 0, y: 0 });
+
+  const openHobby = (id: string, rect: DOMRect) => {
+    setHobbyOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    setHobbyId(id);
+  };
+
+  const closeHobby = useCallback(() => setHobbyId(null), []);
   const [cardId, setCardId] = useState<string | null>(null);
   const [origin, setOrigin] = useState({ x: 0, y: 0 });
   const leaveTimer = useRef<number | null>(null);
@@ -106,6 +120,7 @@ export default function App() {
 
   const focusJob = (id: string, rect: DOMRect, force = false) => {
     if (!force && Date.now() < hoverCooldownUntil.current) return;
+    if (!force && focusedId && id !== focusedId) return;
     if (cooldownTimer.current !== null) {
       clearTimeout(cooldownTimer.current);
       cooldownTimer.current = null;
@@ -124,9 +139,9 @@ export default function App() {
     if (leaveTimer.current !== null) clearTimeout(leaveTimer.current);
     leaveTimer.current = window.setTimeout(() => {
       leaveTimer.current = null;
-      hoverCooldownUntil.current = Date.now() + 3000;
+      hoverCooldownUntil.current = Date.now() + 1000;
       setFocusedId(null);
-      cooldownTimer.current = window.setTimeout(focusUnderCursor, 3000);
+      cooldownTimer.current = window.setTimeout(focusUnderCursor, 1000);
     }, 70);
   };
 
@@ -164,8 +179,9 @@ export default function App() {
     about: <About />,
     work: <Work onFocus={focusJob} onUnfocus={unfocusJob} />,
     projects: <Projects />,
-    hobbies: <Hobbies />,
+    hobbies: <Hobbies onOpen={openHobby} />,
     dudu: <Dudu />,
+    miffy: <Miffy />,
   };
 
   return (
@@ -177,7 +193,7 @@ export default function App() {
           crisp on top. */}
       <div
         className={`transition-[filter,opacity] duration-700 ease-out motion-reduce:transition-none ${
-          focusedId ? 'blur-[6px] opacity-30' : ''
+          focusedId || hobbyId ? 'blur-[6px] opacity-30' : ''
         }`}
       >
         {/* Decorative background only — no interaction. Two stacked WebGL
@@ -260,6 +276,12 @@ export default function App() {
 
         <ThemeToggle dark={theme === 'dark'} onToggle={toggleTheme} />
       </div>
+
+      <HobbyLightbox
+        hobby={hobbies.find((h) => h.id === hobbyId) ?? null}
+        origin={hobbyOrigin}
+        onClose={closeHobby}
+      />
 
       {/* Floating focused card — sits crisp above the blurred page. It's
           anchored to the hovered logo's position (clamped to stay on screen) and

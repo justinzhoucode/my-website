@@ -15,6 +15,8 @@ type CarouselProps = {
   count: number;
   onChange: (index: number) => void;
   children: ReactNode[];
+  className?: string;
+  scrollableSlides?: boolean;
 };
 
 // Horizontal swipeable track. Each child is one full-width slide that scrolls
@@ -25,10 +27,15 @@ export default function Carousel({
   count,
   onChange,
   children,
+  className = 'mt-6 flex-1',
+  scrollableSlides = true,
 }: CarouselProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [slideWidth, setSlideWidth] = useState(0);
   const x = useMotionValue(0);
+  const slideEls = useRef<(HTMLDivElement | null)[]>([]);
+  const activeRef = useRef(activeIndex);
+  activeRef.current = activeIndex;
 
   useLayoutEffect(() => {
     const el = viewportRef.current;
@@ -41,6 +48,16 @@ export default function Carousel({
   }, []);
 
   const stride = slideWidth + SLIDE_GAP;
+
+  useEffect(() => {
+    if (!slideWidth) return;
+    return x.on('change', (v) => {
+      slideEls.current.forEach((el, i) => {
+        if (!el || i === activeRef.current || el.scrollTop === 0) return;
+        if (Math.abs(i * stride + v) >= slideWidth) el.scrollTop = 0;
+      });
+    });
+  }, [x, stride, slideWidth]);
 
   const snapTo = (index: number) => animate(x, -index * stride, spring);
 
@@ -72,7 +89,7 @@ export default function Carousel({
   };
 
   return (
-    <div ref={viewportRef} className="relative mt-6 flex-1 overflow-hidden">
+    <div ref={viewportRef} className={`relative overflow-hidden ${className}`}>
       <motion.div
         className="flex h-full cursor-grab active:cursor-grabbing"
         drag="x"
@@ -88,17 +105,41 @@ export default function Carousel({
         {/* Each slide is its own scroll container, so the browser checks its
             touch-action rather than the track's. pan-y lets touch scroll the
             slide vertically but hands horizontal swipes to the drag. */}
-        {children.map((child, i) => (
-          <Slide key={i} width={slideWidth}>
-            {child}
-          </Slide>
-        ))}
+        {children.map((child, i) =>
+          scrollableSlides ? (
+            <Slide
+              key={i}
+              width={slideWidth}
+              scrollRef={(el) => {
+                slideEls.current[i] = el;
+              }}
+            >
+              {child}
+            </Slide>
+          ) : (
+            <div
+              key={i}
+              style={{ width: slideWidth || '100%' }}
+              className="h-full shrink-0 touch-pan-y"
+            >
+              {child}
+            </div>
+          ),
+        )}
       </motion.div>
     </div>
   );
 }
 
-function Slide({ width, children }: { width: number; children: ReactNode }) {
+function Slide({
+  width,
+  scrollRef: setScrollEl,
+  children,
+}: {
+  width: number;
+  scrollRef: (el: HTMLDivElement | null) => void;
+  children: ReactNode;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [fade, setFade] = useState({ top: false, bottom: false });
@@ -122,7 +163,10 @@ function Slide({ width, children }: { width: number; children: ReactNode }) {
 
   return (
     <div
-      ref={scrollRef}
+      ref={(el) => {
+        scrollRef.current = el;
+        setScrollEl(el);
+      }}
       onScroll={update}
       data-fade-top={fade.top || undefined}
       data-fade-bottom={fade.bottom || undefined}
