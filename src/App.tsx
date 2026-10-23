@@ -166,6 +166,36 @@ export default function App() {
     }
   };
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!focusedId) return;
+    let needsCheck = false;
+    const onAway = () => {
+      needsCheck = true;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!needsCheck || e.pointerType !== 'mouse') return;
+      needsCheck = false;
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const onCard = !!el && !!cardRef.current?.contains(el);
+      const onCompany =
+        el?.closest<HTMLElement>('[data-job-id]')?.dataset.jobId === focusedId;
+      if (!onCard && !onCompany) unfocusJob();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') onAway();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('blur', onAway);
+    window.addEventListener('pointermove', onMove);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('blur', onAway);
+      window.removeEventListener('pointermove', onMove);
+    };
+  }, [focusedId]);
+
   const focusedJob = work.find((job) => job.id === cardId) ?? null;
 
   // Keep the card on screen: clamp its center so a logo near an edge doesn't
@@ -305,6 +335,7 @@ export default function App() {
               transformOrigin: 'center',
               pointerEvents: focusedId ? 'auto' : 'none',
             }}
+            ref={cardRef}
             onMouseEnter={cancelUnfocus}
             onMouseLeave={unfocusJob}
             className="mx-auto flex w-fit max-w-full flex-col items-center px-3 py-5 text-center"

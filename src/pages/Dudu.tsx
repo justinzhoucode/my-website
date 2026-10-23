@@ -1,24 +1,14 @@
-import { useMemo } from 'react';
+const photos = [
+  '/dudu/dudu-1.png',
+  '/dudu/dudu-2.png',
+  '/dudu/dudu-3.png',
+  '/dudu/dudu-4.png',
+  '/dudu/dudu-5.png',
+  '/dudu/dudu-6.png',
+  '/dudu/dudu-7.webp',
+];
 
 export default function Dudu() {
-  // Shuffle the collage once per load so the order varies between visits.
-  const photos = useMemo(() => {
-    const order = [
-      '/dudu/dudu-1.png',
-      '/dudu/dudu-2.png',
-      '/dudu/dudu-3.png',
-      '/dudu/dudu-4.png',
-      '/dudu/dudu-5.png',
-      '/dudu/dudu-6.png',
-      '/dudu/dudu-7.webp',
-    ];
-    for (let i = order.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [order[i], order[j]] = [order[j], order[i]];
-    }
-    return order;
-  }, []);
-
   return (
     <>
       <p className="mb-4 text-subtle">
