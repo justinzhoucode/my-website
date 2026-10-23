@@ -18,7 +18,7 @@ export default function About() {
       <img
         src="/me-and-miffy.png"
         alt="justin and miffy the cat"
-        loading="lazy"
+        decoding="async"
         className="mt-3 w-full rounded-lg"
       />
     </>

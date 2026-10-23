@@ -21,7 +21,8 @@ export default function Miffy() {
             key={src}
             src={src}
             alt={`miffy photo ${i + 1}`}
-            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             className="mb-2 w-full rounded-lg"
           />
         ))}

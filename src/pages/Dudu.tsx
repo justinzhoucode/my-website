@@ -30,7 +30,8 @@ export default function Dudu() {
             key={src}
             src={src}
             alt={`dudu photo ${i + 1}`}
-            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             className="mb-2 w-full rounded-lg"
           />
         ))}

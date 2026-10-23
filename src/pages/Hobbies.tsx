@@ -20,7 +20,8 @@ export default function Hobbies({ onOpen }: HobbiesProps) {
             <img
               src={hobby.images[0]}
               alt=""
-              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
               draggable={false}
               className="aspect-[4/3] w-full object-cover transition duration-300 group-hover:scale-105"
             />
