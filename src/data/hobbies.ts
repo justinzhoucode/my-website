@@ -30,7 +30,7 @@ export const hobbies: Hobby[] = [
       '/hobbies/img_5529.webp',
     ],
     caption:
-      "this is martha, a car that was given to me for free after it was abandoned in a buddy's driveway for three years. i love cars and fixing them, and have saved this E70 X5 from the scrapyard. places ive taken it to: nyc, london, waterloo, toronto, and hopefully many more in the future",
+      "this is martha, a car that was abandoned in a friend's driveway for three years. i love cars and fixing them, and have saved this E70 X5 from the scrapyard. places ive taken it to: nyc, london, waterloo, toronto, and hopefully many more in the future",
   },
   {
     id: 'basketball',

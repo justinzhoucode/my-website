@@ -92,10 +92,14 @@ export default function App() {
   // into) exactly where the cursor is rather than popping in at the center.
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [hobbyId, setHobbyId] = useState<string | null>(null);
-  const [hobbyOrigin, setHobbyOrigin] = useState({ x: 0, y: 0 });
+  const [hobbyOrigin, setHobbyOrigin] = useState({ x: 0, y: 0, width: 0 });
 
   const openHobby = (id: string, rect: DOMRect) => {
-    setHobbyOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    setHobbyOrigin({
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+      width: rect.width,
+    });
     setHobbyId(id);
   };
 
