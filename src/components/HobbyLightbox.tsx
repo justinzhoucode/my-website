@@ -7,6 +7,7 @@ type Origin = { x: number; y: number; width: number };
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+
 type HobbyLightboxProps = {
   hobby: Hobby | null;
   origin: Origin;
@@ -39,6 +40,7 @@ function Lightbox({
   const bgRef = useRef<HTMLDivElement>(null);
   const photoRef = useRef<HTMLDivElement>(null);
   const fromRef = useRef({ x: 0, y: 0, scale: 0.3 });
+  const [settled, setSettled] = useState(false);
 
   const revealEls = () =>
     Array.from(panelRef.current?.querySelectorAll<HTMLElement>('[data-reveal]') ?? []);
@@ -59,7 +61,9 @@ function Lightbox({
       { x: [from.x, 0], y: [from.y, 0], scale: [from.scale, 1], opacity: [0, 1] },
       { duration: 0.5, ease },
     );
-    animate(bg, { opacity: [0, 1], scale: [0.96, 1] }, { duration: 0.35, delay: 0.35, ease });
+    animate(bg, { opacity: [0, 1], scale: [0.96, 1] }, { duration: 0.35, delay: 0.35, ease }).then(
+      () => setSettled(true),
+    );
     animate(revealEls(), { opacity: [0, 1], y: [8, 0] }, { duration: 0.35, delay: 0.45, ease });
   }, []);
 
@@ -72,6 +76,7 @@ function Lightbox({
       return;
     }
     const from = fromRef.current;
+    setSettled(false);
     animate(revealEls(), { opacity: 0, y: 8 }, { duration: 0.18 });
     animate(bg, { opacity: 0, scale: 0.96 }, { duration: 0.22 });
     animate(
@@ -115,6 +120,28 @@ function Lightbox({
           className="absolute inset-0 -z-10 rounded-2xl border border-line bg-card shadow-[var(--panel-shadow)]"
         />
 
+        <button
+          type="button"
+          data-reveal
+          style={{ opacity: 0 }}
+          onClick={onClose}
+          aria-label="close"
+          className="absolute top-1 left-1 z-10 inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-muted transition duration-150 hover:scale-110 hover:text-fg sm:top-2 sm:left-2"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-5 w-5"
+            aria-hidden="true"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
         <div data-reveal style={{ opacity: 0 }} className="flex w-11 justify-center">
           {index > 0 && (
             <ArrowButton side="left" onClick={() => setIndex(index - 1)} />
@@ -130,14 +157,12 @@ function Lightbox({
             scrollableSlides={false}
           >
             {hobby.images.map((src, i) => (
-              <div key={src} className="flex h-full w-full items-center justify-center">
-                <img
-                  src={src}
-                  alt={`${hobby.name} photo ${i + 1}`}
-                  draggable={false}
-                  className="max-h-full max-w-full rounded-xl select-none"
-                />
-              </div>
+              <FittedImage
+                key={src}
+                src={src}
+                alt={`${hobby.name} photo ${i + 1}`}
+                solid={settled}
+              />
             ))}
           </Carousel>
         </div>
@@ -212,5 +237,43 @@ function ArrowButton({
         <path d={side === 'left' ? 'M15 18l-6-6 6-6' : 'M9 18l6-6-6-6'} />
       </svg>
     </button>
+  );
+}
+
+function FittedImage({ src, alt, solid }: { src: string; alt: string; solid: boolean }) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const [natural, setNatural] = useState({ w: 0, h: 0 });
+
+  useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    const measure = () => setBox({ w: el.clientWidth, h: el.clientHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const scale =
+    natural.w && box.w && box.h ? Math.min(box.w / natural.w, box.h / natural.h) : 0;
+  const size = scale
+    ? { width: Math.round(natural.w * scale), height: Math.round(natural.h * scale) }
+    : { width: '100%', height: '100%' };
+
+  return (
+    <div ref={boxRef} className={`flex h-full w-full items-center justify-center ${solid ? 'bg-card' : ''}`}
+    >
+      <img
+        src={src}
+        alt={alt}
+        draggable={false}
+        onLoad={(e) =>
+          setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })
+        }
+        style={{ ...size, visibility: scale ? 'visible' : 'hidden' }}
+        className="block shrink-0 rounded-xl select-none"
+      />
+    </div>
   );
 }
