@@ -125,9 +125,9 @@
 }
 
 .scroll-fade[data-fade-top] {
-  --fade-top: 20px;
+  --fade-top: 10px;
 }
 
 .scroll-fade[data-fade-bottom] {
-  --fade-bottom: 20px;
+  --fade-bottom: 10px;
 }
